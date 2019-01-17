@@ -92,7 +92,7 @@ pollConnector.init = (initCallback) => {
       'Content-Type': 'application/json',
     },
     processData: false,
-    data: '{\n\t"wdc": "uk polling",\n\t"action": "view"\n}',
+    data: '{\n\t"wdc": "eupollofpolls",\n\t"action": "view"\n}',
   };
   $.ajax(settings)
     .done((response) => {
@@ -119,7 +119,7 @@ pollConnector.getData = (table, doneCallback) => {
       'Content-Type': 'application/json',
     },
     processData: false,
-    data: '{\n\t"wdc": "uk polling",\n\t"action": "download"\n}',
+    data: '{\n\t"wdc": "eupollofpolls",\n\t"action": "download"\n}',
   };
   $.ajax(settings)
     .done((response) => {
