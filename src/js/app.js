@@ -7,18 +7,15 @@ import 'bootstrap';
 // Material Design Bootstrap
 import '../vendors/mdb/js/mdb';
 
+const { recordStat, getCountries, getPoll } = require('../assets/mongo/browser');
+
+const tableauwdc = require('./tableauwdc/tableauwdc.js');
+
+tableauwdc.init();
+
+const { tableau } = window;
 
 const { async } = window;
-
-let serverBase = '';
-
-if (window.location.host !== 'eu-pollofpolls-wdc.theinformationlab.io') {
-  serverBase = 'http://localhost:3001';
-}
-
-// **
-// START Utility functions
-// **
 
 const pollCol = [{
   id: 'country_code',
@@ -90,33 +87,20 @@ function decodePoll(countryCode, countryName, poll, date, firm, source, parties,
 }
 
 // **
-// END Utility functions
+// END Utility functionsk
 // **
 
 // **
 // START Tableau WDC Code
 // **
-const tableau = require('./tableauwdc-2.3.latest.min.js');
 
 const pollConnector = tableau.makeConnector();
 
 pollConnector.init = (initCallback) => {
   tableau.connectionName = 'pollof­polls.eu';
 
-  const settings = {
-    url: '/api/stats',
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    processData: false,
-    data: '{\n\t"wdc": "eupollofpolls",\n\t"action": "view"\n}',
-  };
-  $.ajax(settings)
-    .done((response) => {
-      console.log(response);
-    })
-    .always(() => {
+  recordStat('eupollofpolls', 'view')
+    .then(() => {
       tableau.submit();
     });
 
@@ -130,53 +114,44 @@ pollConnector.getSchema = (schemaCallback) => {
 
 // Download the data
 pollConnector.getData = (table, doneCallback) => {
-  const settings = {
-    url: '/api/stats',
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    processData: false,
-    data: '{\n\t"wdc": "eupollofpolls",\n\t"action": "download"\n}',
-  };
-  $.ajax(settings)
-    .done((response) => {
-      console.log(response);
-    })
-    .always(() => {
+  recordStat('eupollofpolls', 'download')
+    .then(() => {
       if (table.tableInfo.id === 'polls') {
         tableau.reportProgress('Getting list of available polls');
-        getCountries((countries) => {
-          console.log(countries);
-          async.each(countries, (country, doneCountry) => {
-            tableau.reportProgress(`Getting ${country.country_name} ${country.poll}`);
-            getPoll(country.url, (poll) => {
-              console.log(poll);
-              for (let i = 0; i < poll.length; i += 1) {
-                decodePoll(
-                  country.country_code,
-                  country.country_name,
-                  country.poll,
-                  poll[i].date,
-                  poll[i].firm,
-                  poll[i].source,
-                  poll[i].parties,
-                  (results) => {
-                    table.appendRows(results);
-                  },
-                );
+        getCountries()
+          .then((countries) => {
+            console.log(countries);
+            async.each(countries, (country, doneCountry) => {
+              tableau.reportProgress(`Getting ${country.country_name} ${country.poll}`);
+              console.log(country.url);
+              getPoll(country.url)
+                .then((poll) => {
+                  console.log(poll);
+                  for (let i = 0; i < poll.length; i += 1) {
+                    decodePoll(
+                      country.country_code,
+                      country.country_name,
+                      country.poll,
+                      poll[i].date,
+                      poll[i].firm,
+                      poll[i].source,
+                      poll[i].parties,
+                      (results) => {
+                        table.appendRows(results);
+                      },
+                    );
+                  }
+                  doneCountry();
+                });
+            }, (err) => {
+              if (err) {
+                console.log('There was an error with Country Polls', err);
+              } else {
+                console.log('All done!');
+                doneCallback();
               }
-              doneCountry();
             });
-          }, (err) => {
-            if (err) {
-              console.log('There was an error with Country Polls', err);
-            } else {
-              console.log('All done!');
-              doneCallback();
-            }
           });
-        });
       }
     });
 };
