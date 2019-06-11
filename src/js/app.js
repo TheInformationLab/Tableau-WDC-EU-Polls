@@ -7,7 +7,6 @@ import 'bootstrap';
 // Material Design Bootstrap
 import '../vendors/mdb/js/mdb';
 
-const { schema } = require('./schema');
 
 const { async } = window;
 
@@ -21,32 +20,51 @@ if (window.location.host !== 'eu-pollofpolls-wdc.theinformationlab.io') {
 // START Utility functions
 // **
 
-// Function getCountries
-//  - Gets available polls for each country
-// @callback      {array}   List of countries
-function getCountries(callback) {
-  const settings = {
-    url: `${serverBase}/api/countries`,
-    method: 'GET',
-  };
-  $.ajax(settings).done((response) => {
-    callback(JSON.parse(response));
-  });
-}
+const pollCol = [{
+  id: 'country_code',
+  alias: 'Country Code',
+  dataType: tableau.dataTypeEnum.string,
+}, {
+  id: 'country_name',
+  alias: 'Country Name',
+  dataType: tableau.dataTypeEnum.string,
+}, {
+  id: 'poll',
+  alias: 'Poll Name',
+  dataType: tableau.dataTypeEnum.string,
+}, {
+  id: 'date',
+  alias: 'Poll Date',
+  dataType: tableau.dataTypeEnum.date,
+}, {
+  id: 'firm',
+  alias: 'Polling Firm',
+  dataType: tableau.dataTypeEnum.string,
+}, {
+  id: 'source',
+  alias: 'Source URL',
+  dataType: tableau.dataTypeEnum.string,
+}, {
+  id: 'party',
+  alias: 'Party',
+  dataType: tableau.dataTypeEnum.string,
+}, {
+  id: 'result',
+  alias: 'Result',
+  dataType: tableau.dataTypeEnum.float,
+}];
 
-// Function getPoll
-//  - Gets poll belonging to a country
-// @url   {string}  ID for playlist
-// @callback      {array}   List of polls
-function getPoll(url, callback) {
-  const settings = {
-    url: `${serverBase}/api/poll?url=${url}`,
-    method: 'GET',
-  };
-  $.ajax(settings).done((response) => {
-    callback(JSON.parse(response));
-  });
-}
+const polls = {
+  id: 'polls',
+  alias: 'Polls',
+  columns: pollCol,
+};
+
+const schema = {
+  tables: [
+    polls,
+  ],
+};
 
 // Function decodePoll
 //  - Gets poll belonging to a country
